@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "427175531226",
+    "firebase_url": "https://huaweidemoapp-926e3.firebaseio.com",
+    "project_id": "huaweidemoapp-926e3",
+    "storage_bucket": "huaweidemoapp-926e3.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:427175531226:android:63a139c913527b6ef74be3",
+        "android_client_info": {
+          "package_name": "com.example.huaweidemoapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "427175531226-gr35t5oalg6etekg1uca6ipun10jeg62.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.huaweidemoapp",
+            "certificate_hash": "9f8de98df36a11c9dfbca3c3c84212d1b2f26f59"
+          }
+        },
+        {
+          "client_id": "427175531226-neo06miukdbg45ddj6qj5ot552r6mb6k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBBIxb-1MVB4_kqydMzGefi6HLDKiOg5Xw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "427175531226-neo06miukdbg45ddj6qj5ot552r6mb6k.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#b71c1c</color>
+    <color name="colorPrimaryTrans">#33F9AA33</color>
+    <color name="colorPrimaryDark">#344955</color>
+    <color name="colorAccent">#b71c1c</color>
+    <color name="black">#344955</color>
+    <color name="settingsBar">#bdbdbd</color>
+</resources>
