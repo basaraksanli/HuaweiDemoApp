@@ -33,6 +33,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -76,21 +77,38 @@ public class GoogleAuth implements IBaseAuth, GoogleApiClient.OnConnectionFailed
 
     public void authWithGoogle(GoogleSignInAccount account) {
 
+
         AuthCredential credential = GoogleAuthProvider.getCredential(account.getIdToken(), null);
         firebaseAuth.signInWithCredential(credential).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
             @Override
             public void onComplete(@NonNull Task<AuthResult> task) {
                 if (task.isSuccessful()) {
-                    FirebaseUser user = firebaseAuth.getCurrentUser();
+                    final FirebaseUser user = firebaseAuth.getCurrentUser();
                     if (task.getResult().getAdditionalUserInfo().isNewUser()) {
-                        User userObj = new User(user.getProviderData().get(1).getEmail(),user.getDisplayName(), darkModeProbability());
-                        addUserToDatabase(userObj, user.getUid());
-                        CurrentUserData.getUserData(userObj, user.getUid());
-                        try {
-                            getGmailProfilePicture(user.getPhotoUrl(), user.getUid());
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
+                        final User userObj = new User(user.getProviderData().get(1).getEmail(),user.getDisplayName(), darkModeProbability());
+                        DatabaseReference database = FirebaseDatabase.getInstance().getReference();
+                        DatabaseReference ref = database.child("users").child(userObj.getEmail().replace(".",""));
+                        ref.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                if(dataSnapshot.exists()){
+                                    getPreferences();
+                                }
+                                else {
+                                    addUserToDatabase(userObj);
+                                    CurrentUserData.getUserData(userObj);
+                                    try {
+                                        getGmailProfilePicture(user.getPhotoUrl(), userObj.getEmail());
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            }
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                            }
+                        });
                     }else {
                         getPreferences();
                     }
@@ -103,9 +121,10 @@ public class GoogleAuth implements IBaseAuth, GoogleApiClient.OnConnectionFailed
         });
     }
 
-    public void addUserToDatabase(User user, String uid){
+
+    public void addUserToDatabase(User user){
         DatabaseReference database = FirebaseDatabase.getInstance().getReference();
-        DatabaseReference ref = database.child("users").child(uid);
+        DatabaseReference ref = database.child("users").child(user.getEmail().replace(".",""));
         ref.setValue(user);
     }
     public void activityResult(Intent data) {
@@ -118,7 +137,7 @@ public class GoogleAuth implements IBaseAuth, GoogleApiClient.OnConnectionFailed
             progressBar.setVisibility(View.GONE);
     }
 
-    public static void getGmailProfilePicture(Uri imageUrl,String userID) {
+    public static void getGmailProfilePicture(Uri imageUrl,String email) {
         InputStream input = null;
         try {
             input = new java.net.URL(imageUrl.toString()+ "?type=large`").openStream();
@@ -127,7 +146,7 @@ public class GoogleAuth implements IBaseAuth, GoogleApiClient.OnConnectionFailed
         }
 
         StorageReference sref = FirebaseStorage.getInstance().getReference();
-        final StorageReference imageRef = sref.child("users/"+ userID+ ".jpg");
+        final StorageReference imageRef = sref.child("users/"+ email.replace(".","")+ ".jpg");
 
         UploadTask uploadTask = imageRef.putStream(input);
         uploadTask.addOnFailureListener(new OnFailureListener() {
@@ -157,17 +176,18 @@ public class GoogleAuth implements IBaseAuth, GoogleApiClient.OnConnectionFailed
     public void getPreferences(){
         final User[] user = new User[1];
         FirebaseDatabase firebaseDatabase;
-        DatabaseReference databaseRef;
+        final DatabaseReference databaseRef;
         firebaseDatabase = FirebaseDatabase.getInstance();
-        databaseRef= firebaseDatabase.getReference().child("users").child(firebaseAuth.getUid());
+        databaseRef= firebaseDatabase.getReference().child("users").child(firebaseAuth.getCurrentUser().getProviderData().get(1).getEmail().replace(".", ""));
         databaseRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 user[0] = dataSnapshot.getValue(User.class);
-                CurrentUserData.getUserData(user[0], firebaseAuth.getUid());
+                CurrentUserData.getUserData(user[0]);
                 progressBar.setVisibility(View.GONE);
                 Intent intent = new Intent(loginActivity, MapsActivity.class);
                 loginActivity.startActivity(intent);
+                databaseRef.removeEventListener(this);
             }
 
             @Override

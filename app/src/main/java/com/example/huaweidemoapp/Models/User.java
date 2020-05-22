@@ -11,7 +11,7 @@ public class User {
         this.email = email;
         this.name = name;
         this.preferenceDarkMode= preferenceDarkMode;
-        preferenceDistance = 10;
+        preferenceDistance = 1;
     }
 
     public String getEmail() {

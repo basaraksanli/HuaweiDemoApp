@@ -103,16 +103,32 @@ public class FacebookAuth implements IBaseAuth {
             @Override
             public void onComplete(@NonNull Task<AuthResult> task) {
                 if (task.isSuccessful()) {
-                    FirebaseUser user = firebaseAuth.getCurrentUser();
+                    final FirebaseUser user = firebaseAuth.getCurrentUser();
                     if (task.getResult().getAdditionalUserInfo().isNewUser()) {
-                        User userObj = new User(user.getProviderData().get(1).getEmail(),user.getDisplayName(),darkModeProbability());
-                        addUserToDatabase(userObj, user.getUid());
-                        CurrentUserData.getUserData(userObj, user.getUid());
-                        try {
-                            getFacebookProfilePicture(user.getPhotoUrl(), user.getUid());
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
+                        final User userObj = new User(user.getProviderData().get(1).getEmail(),user.getDisplayName(),darkModeProbability());
+                        DatabaseReference database = FirebaseDatabase.getInstance().getReference();
+                        DatabaseReference ref = database.child("users").child(userObj.getEmail().replace(".",""));
+                        ref.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                if(dataSnapshot.exists()){
+                                    getPreferences();
+                                }
+                                else {
+                                    addUserToDatabase(userObj);
+                                    CurrentUserData.getUserData(userObj);
+                                    try {
+                                        getFacebookProfilePicture(user.getPhotoUrl(), userObj.getEmail().replace(".",""));
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            }
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                            }
+                        });
                     }else {
                         getPreferences();
                     }
@@ -127,7 +143,7 @@ public class FacebookAuth implements IBaseAuth {
 
     }
 
-    public static void getFacebookProfilePicture(Uri photoUrl, String userID) {
+    public static void getFacebookProfilePicture(Uri photoUrl, String email) {
         InputStream input = null;
         try {
             // Download Image from URL
@@ -137,7 +153,7 @@ public class FacebookAuth implements IBaseAuth {
         }
 
         StorageReference sref = FirebaseStorage.getInstance().getReference();
-        final StorageReference imageRef = sref.child("users/"+ userID+ ".jpg");
+        final StorageReference imageRef = sref.child("users/"+ email);
 
 
         UploadTask uploadTask = imageRef.putStream(input);
@@ -160,9 +176,9 @@ public class FacebookAuth implements IBaseAuth {
 
 
     }
-    public void addUserToDatabase(User user, String uid){
+    public void addUserToDatabase(User user){
         DatabaseReference mDatabaseReferance = db.getReference();
-        mDatabaseReferance = mDatabaseReferance.child("users").child(uid);
+        mDatabaseReferance = mDatabaseReferance.child("users").child(user.getEmail().replace(".",""));
         mDatabaseReferance.setValue(user);
     }
     public void activityResult(int requestCode, int resultCode, Intent data) {
@@ -179,18 +195,20 @@ public class FacebookAuth implements IBaseAuth {
     public void getPreferences(){
         final User[] user = new User[1];
         final FirebaseDatabase firebaseDatabase;
-        DatabaseReference databaseRef;
+        final DatabaseReference databaseRef;
         firebaseDatabase = FirebaseDatabase.getInstance();
-        databaseRef= firebaseDatabase.getReference().child("users").child(firebaseAuth.getUid());
+        databaseRef= firebaseDatabase.getReference().child("users").child(firebaseAuth.getCurrentUser().getProviderData().get(1).getEmail().replace(".", ""));
         databaseRef.addValueEventListener(new ValueEventListener() {
-            @Override
+                @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 user[0] = dataSnapshot.getValue(User.class);
                 assert user[0] != null;
-                CurrentUserData.getUserData(user[0], firebaseAuth.getUid());
+                CurrentUserData.getUserData(user[0]);
+
                 progressBar.setVisibility(View.GONE);
                 Intent intent = new Intent(loginActivity, MapsActivity.class);
                 loginActivity.startActivity(intent);
+                databaseRef.removeEventListener(this);
             }
 
             @Override

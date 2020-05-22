@@ -5,17 +5,15 @@ import android.location.Location;
 public class CurrentUserData {
     private static String displayName;
     private static String email;
-    private static String userID;
-    private static Location firstLocation;
+    private static Location firstLocation = null;
     private static boolean darkMode= false;
-    private static int distance=10;
+    private static int distance=-1;
 
-    public static void getUserData(User userObj, String userID){
+    public static void getUserData(User userObj){
         CurrentUserData.darkMode = userObj.isPreferenceDarkMode();
         CurrentUserData.distance = userObj.getPreferenceDistance();
         CurrentUserData.displayName = userObj.getName();
         CurrentUserData.email = userObj.getEmail();
-        CurrentUserData.userID = userID;
     }
 
     public static String getDisplayName() {
@@ -32,14 +30,6 @@ public class CurrentUserData {
 
     public static void setEmail(String email) {
         CurrentUserData.email = email;
-    }
-
-    public static String getUserID() {
-        return userID;
-    }
-
-    public static void setUserID(String userID) {
-        CurrentUserData.userID = userID;
     }
 
     public static Location getFirstLocation() {

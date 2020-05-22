@@ -26,6 +26,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+
 import java.util.Arrays;
 
 
@@ -35,7 +36,7 @@ public class LoginActivity extends AppCompatActivity  {
 
     FirebaseAuth auth;
     FirebaseUser user;
-    SignInButton googleSignInButton;
+    com.shobhitpuri.custombuttons.GoogleSignInButton googleSignInButton;
     LoginButton facebookSignInButton;
     IBaseAuth baseAuth;
     ProgressBar progressBar;
@@ -82,16 +83,17 @@ public class LoginActivity extends AppCompatActivity  {
     public void getPreferences(final LoginActivity loginActivity){
         final User[] user = new User[1];
         FirebaseDatabase firebaseDatabase;
-        DatabaseReference databaseRef;
+        final DatabaseReference databaseRef;
         firebaseDatabase = FirebaseDatabase.getInstance();
-        databaseRef= firebaseDatabase.getReference().child("users").child(FirebaseAuth.getInstance().getUid());
+        databaseRef= firebaseDatabase.getReference().child("users").child(FirebaseAuth.getInstance().getCurrentUser().getProviderData().get(1).getEmail().replace(".",""));
         databaseRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 user[0] = dataSnapshot.getValue(User.class);
-                CurrentUserData.getUserData(user[0],FirebaseAuth.getInstance().getUid());
+                CurrentUserData.getUserData(user[0]);
                 Intent intent = new Intent(loginActivity, MapsActivity.class);
                 loginActivity.startActivity(intent);
+                databaseRef.removeEventListener(this);
             }
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {

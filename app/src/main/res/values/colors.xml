@@ -4,6 +4,7 @@
     <color name="colorPrimaryTrans">#33F9AA33</color>
     <color name="colorPrimaryDark">#344955</color>
     <color name="colorAccent">#b71c1c</color>
-    <color name="black">#344955</color>
+    <color name="black">#000000</color>
     <color name="settingsBar">#bdbdbd</color>
+    <color name="white">#ffffff</color>
 </resources>

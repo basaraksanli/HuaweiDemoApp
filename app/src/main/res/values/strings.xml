@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Huawei Demo App</string>
+    <string name="app_name">Huawei Demo Map App</string>
     <!-- Strings related to login -->
     <string name="prompt_email">Email</string>
     <string name="prompt_password">Password</string>
@@ -30,4 +30,9 @@
     <string name="user_preferences">User Preferences</string>
     <string name="dark_mode_string">Dark Mode:</string>
     <string name="notify_distance">Notify Distance:</string>
+    <string name="save_settings">Save</string>
+    <string name="application_settings">Application Settings</string>
+    <string name="defaultDistance">10m</string>
+    <string name="backButton">Back</string>
+    <string name="sign_in_with_google">Sign in With Google</string>
 </resources>
