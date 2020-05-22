@@ -64,6 +64,8 @@ public class LoginActivity extends AppCompatActivity  {
             googleSignInButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    googleSignInButton.setEnabled(false);
+                    facebookSignInButton.setEnabled(false);
                     baseAuth = new GoogleAuth(loginActivity);
                     baseAuth.login();
                 }
@@ -71,6 +73,8 @@ public class LoginActivity extends AppCompatActivity  {
             facebookSignInButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    facebookSignInButton.setEnabled(false);
+                    googleSignInButton.setEnabled(false);
                     baseAuth= new FacebookAuth(loginActivity);
                     baseAuth.login();
                 }
@@ -109,7 +113,7 @@ public class LoginActivity extends AppCompatActivity  {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 9001) {
             GoogleAuth googleAuth= (GoogleAuth) baseAuth;
-            googleAuth.activityResult(data);
+            googleAuth.activityResult(data,this);
         }
         else if(requestCode == 64206){
             FacebookAuth facebookAuth = (FacebookAuth) baseAuth;

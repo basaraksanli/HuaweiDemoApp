@@ -1,5 +1,6 @@
 package com.example.huaweidemoapp.Controllers.LoginControllers;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.util.Log;
@@ -8,17 +9,20 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.FragmentActivity;
 
 import com.example.huaweidemoapp.Activities.MapsActivity;
 import com.example.huaweidemoapp.Models.User;
 import com.example.huaweidemoapp.Models.CurrentUserData;
 import com.example.huaweidemoapp.R;
 import com.example.huaweidemoapp.Activities.LoginActivity;
+import com.facebook.login.widget.LoginButton;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.auth.api.signin.GoogleSignInResult;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.tasks.OnCanceledListener;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -52,11 +56,16 @@ public class GoogleAuth implements IBaseAuth, GoogleApiClient.OnConnectionFailed
     private static ProgressBar progressBar;
     private static final int RC_SIGN_IN = 9001;
     GoogleApiClient mGoogleApiClient;
+    private com.facebook.login.widget.LoginButton facebookLoginButton;
+    private com.shobhitpuri.custombuttons.GoogleSignInButton googleSignInButton;
 
     public GoogleAuth(LoginActivity loginActivity) {
         firebaseAuth = FirebaseAuth.getInstance();
         this.loginActivity = loginActivity;
         progressBar = loginActivity.findViewById(R.id.progressBar);
+
+        facebookLoginButton = loginActivity.findViewById(R.id.facebook_login_button);
+        googleSignInButton= loginActivity.findViewById(R.id.google_sign_in_button);
 
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(loginActivity.getString(R.string.default_web_client_id))
@@ -79,7 +88,21 @@ public class GoogleAuth implements IBaseAuth, GoogleApiClient.OnConnectionFailed
 
 
         AuthCredential credential = GoogleAuthProvider.getCredential(account.getIdToken(), null);
-        firebaseAuth.signInWithCredential(credential).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+        firebaseAuth.signInWithCredential(credential).addOnCanceledListener(new OnCanceledListener() {
+            @Override
+            public void onCanceled() {
+                googleSignInButton.setEnabled(true);
+                facebookLoginButton.setEnabled(true);
+                progressBar.setVisibility(View.GONE);
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                googleSignInButton.setEnabled(true);
+                facebookLoginButton.setEnabled(true);
+                progressBar.setVisibility(View.GONE);
+            }
+        }).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
             @Override
             public void onComplete(@NonNull Task<AuthResult> task) {
                 if (task.isSuccessful()) {
@@ -106,7 +129,9 @@ public class GoogleAuth implements IBaseAuth, GoogleApiClient.OnConnectionFailed
                             }
                             @Override
                             public void onCancelled(@NonNull DatabaseError databaseError) {
-
+                                googleSignInButton.setEnabled(true);
+                                facebookLoginButton.setEnabled(true);
+                                progressBar.setVisibility(View.GONE);
                             }
                         });
                     }else {
@@ -127,14 +152,20 @@ public class GoogleAuth implements IBaseAuth, GoogleApiClient.OnConnectionFailed
         DatabaseReference ref = database.child("users").child(user.getEmail().replace(".",""));
         ref.setValue(user);
     }
-    public void activityResult(Intent data) {
+    public void activityResult(Intent data, Activity activity) {
         GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
         Log.d("Login Google", "handleSignInResult:" + result.getStatus());
         if (result.isSuccess()) {
             GoogleSignInAccount account = result.getSignInAccount();
             authWithGoogle(account);
-        } else
+        } else{
+            googleSignInButton.setEnabled(true);
+            facebookLoginButton.setEnabled(true);
             progressBar.setVisibility(View.GONE);
+            mGoogleApiClient.stopAutoManage((FragmentActivity) activity);
+            mGoogleApiClient.disconnect();
+        }
+
     }
 
     public static void getGmailProfilePicture(Uri imageUrl,String email) {
@@ -146,7 +177,7 @@ public class GoogleAuth implements IBaseAuth, GoogleApiClient.OnConnectionFailed
         }
 
         StorageReference sref = FirebaseStorage.getInstance().getReference();
-        final StorageReference imageRef = sref.child("users/"+ email.replace(".","")+ ".jpg");
+        final StorageReference imageRef = sref.child("users/"+ email.replace(".",""));
 
         UploadTask uploadTask = imageRef.putStream(input);
         uploadTask.addOnFailureListener(new OnFailureListener() {

@@ -5,7 +5,11 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
 import com.example.huaweidemoapp.Controllers.MapControllers.MapsController;
+import com.example.huaweidemoapp.Models.CurrentUserData;
 import com.facebook.login.LoginManager;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.material.navigation.NavigationView;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.view.GravityCompat;
@@ -74,8 +78,20 @@ public class MapsActivity extends AppCompatActivity  {
             public void onClick(DialogInterface dialog, int answer) {
                 switch (answer) {
                     case DialogInterface.BUTTON_POSITIVE:
+                        CurrentUserData.setDistance(1);
+                        CurrentUserData.setEmail("");
+                        CurrentUserData.setDarkMode(false);
+                        CurrentUserData.setFirstLocation(null);
+                        CurrentUserData.setDisplayName("");
                         LoginManager.getInstance().logOut();
+                        GoogleSignInOptions gso = new GoogleSignInOptions.
+                                Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).
+                                build();
+
+                        GoogleSignInClient googleSignInClient=GoogleSignIn.getClient(getApplicationContext(),gso);
+                        googleSignInClient.signOut();
                         auth.signOut();
+
                         Intent loginActivity = new Intent(mapsActivity, LoginActivity.class);
                         startActivity(loginActivity);
                         break;

@@ -35,4 +35,6 @@
     <string name="defaultDistance">10m</string>
     <string name="backButton">Back</string>
     <string name="sign_in_with_google">Sign in With Google</string>
+    <string name="set_first_location_text">Set First Location</string>
+    <string name="move_camera">Move Camera</string>
 </resources>

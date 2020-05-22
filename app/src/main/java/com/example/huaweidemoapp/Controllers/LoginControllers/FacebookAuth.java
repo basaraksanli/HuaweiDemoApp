@@ -21,6 +21,7 @@ import com.facebook.FacebookException;
 import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
+import com.google.android.gms.tasks.OnCanceledListener;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -51,7 +52,9 @@ public class FacebookAuth implements IBaseAuth {
     private static LoginActivity loginActivity;
     private static ProgressBar progressBar;
     private CallbackManager callbackManager;
-    private LoginButton LoginButton;
+    private LoginButton facebookLoginButton;
+    private com.shobhitpuri.custombuttons.GoogleSignInButton googleSignInButton;
+
     private FirebaseDatabase db;
 
     public FacebookAuth(LoginActivity loginActivity) {
@@ -60,7 +63,9 @@ public class FacebookAuth implements IBaseAuth {
         this.loginActivity = loginActivity;
         progressBar = loginActivity.findViewById(R.id.progressBar);
         callbackManager = CallbackManager.Factory.create();
-        LoginButton = loginActivity.findViewById(R.id.facebook_login_button);
+        facebookLoginButton = loginActivity.findViewById(R.id.facebook_login_button);
+        googleSignInButton= loginActivity.findViewById(R.id.google_sign_in_button);
+
     }
 
     @Override
@@ -77,12 +82,15 @@ public class FacebookAuth implements IBaseAuth {
 
             @Override
             public void onCancel() {
-                Toast.makeText(loginActivity, "User Cancelled", Toast.LENGTH_LONG).show();
+                googleSignInButton.setEnabled(true);
+                facebookLoginButton.setEnabled(true);
                 progressBar.setVisibility(View.GONE);
             }
 
             @Override
             public void onError(FacebookException error) {
+                googleSignInButton.setEnabled(true);
+                facebookLoginButton.setEnabled(true);
                 Log.d("Login facebook", "handleSignInResult:" + error.getMessage());
                 Toast.makeText(loginActivity, error.getMessage(), Toast.LENGTH_LONG).show();
                 progressBar.setVisibility(View.GONE);
@@ -94,10 +102,19 @@ public class FacebookAuth implements IBaseAuth {
         AuthCredential credential = FacebookAuthProvider.getCredential(accessToken.getToken());
 
 
-        firebaseAuth.signInWithCredential(credential).addOnFailureListener(new OnFailureListener() {
+        firebaseAuth.signInWithCredential(credential).addOnCanceledListener(new OnCanceledListener() {
+            @Override
+            public void onCanceled() {
+                googleSignInButton.setEnabled(true);
+                facebookLoginButton.setEnabled(true);
+                progressBar.setVisibility(View.GONE);
+            }
+        }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
-
+                googleSignInButton.setEnabled(true);
+                facebookLoginButton.setEnabled(true);
+                progressBar.setVisibility(View.GONE);
             }
         }).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
             @Override
@@ -118,7 +135,7 @@ public class FacebookAuth implements IBaseAuth {
                                     addUserToDatabase(userObj);
                                     CurrentUserData.getUserData(userObj);
                                     try {
-                                        getFacebookProfilePicture(user.getPhotoUrl(), userObj.getEmail().replace(".",""));
+                                        getFacebookProfilePicture(user.getPhotoUrl(), userObj.getEmail());
                                     } catch (Exception e) {
                                         e.printStackTrace();
                                     }
@@ -126,7 +143,9 @@ public class FacebookAuth implements IBaseAuth {
                             }
                             @Override
                             public void onCancelled(@NonNull DatabaseError databaseError) {
-
+                                googleSignInButton.setEnabled(true);
+                                facebookLoginButton.setEnabled(true);
+                                progressBar.setVisibility(View.GONE);
                             }
                         });
                     }else {
@@ -153,7 +172,7 @@ public class FacebookAuth implements IBaseAuth {
         }
 
         StorageReference sref = FirebaseStorage.getInstance().getReference();
-        final StorageReference imageRef = sref.child("users/"+ email);
+        final StorageReference imageRef = sref.child("users/"+ email.replace(".",""));
 
 
         UploadTask uploadTask = imageRef.putStream(input);

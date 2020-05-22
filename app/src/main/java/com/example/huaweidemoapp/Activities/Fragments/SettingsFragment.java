@@ -45,7 +45,6 @@ public class SettingsFragment extends Fragment {
         darkMode= root.findViewById(R.id.darkModeSwitch);
         darkMode.setChecked(CurrentUserData.isDarkMode());
         distanceText.setText(CurrentUserData.getDistance()+ "m");
-        Button saveButton = root.findViewById(R.id.saveButton);
         Button backButton = root.findViewById(R.id.backButton);
 
 
@@ -56,18 +55,6 @@ public class SettingsFragment extends Fragment {
                 getFragmentManager().popBackStackImmediate();
             }
         });
-        saveButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                CurrentUserData.setDarkMode(darkMode.isChecked());
-                CurrentUserData.setDistance(distanceSeekBar.getProgress()+1);
-                mDatabase.child("preferenceDarkMode").setValue(darkMode.isChecked());
-                mDatabase.child("preferenceDistance").setValue(distanceSeekBar.getProgress()+1);
-                getFragmentManager().popBackStackImmediate();
-            }
-        });
-
 
         distanceSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -75,11 +62,21 @@ public class SettingsFragment extends Fragment {
                                           boolean fromUser) {
                 progress+=1;
                 distanceText.setText(progress + "m");
+                mDatabase.child("preferenceDistance").setValue(distanceSeekBar.getProgress()+1);
+                CurrentUserData.setDistance(distanceSeekBar.getProgress()+1);
             }
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {}
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+        darkMode.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mDatabase.child("preferenceDarkMode").setValue(darkMode.isChecked());
+                CurrentUserData.setDarkMode(darkMode.isChecked());
+
+            }
         });
 
         return root;

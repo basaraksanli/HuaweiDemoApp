@@ -136,20 +136,9 @@
         <Button
             android:id="@+id/backButton"
             android:layout_weight="1"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/backButton"
-            android:background="@color/colorPrimary"
-            android:textColor="@color/white"/>
-        <View android:layout_height="fill_parent"
-            android:layout_width="2px"
-            android:background="#ffffff"/>
-        <Button
-            android:id="@+id/saveButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/save_settings"
             android:background="@color/colorPrimary"
             android:textColor="@color/white"/>
     </LinearLayout>

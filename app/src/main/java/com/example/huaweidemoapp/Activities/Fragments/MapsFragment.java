@@ -15,6 +15,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -38,6 +39,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -59,32 +61,50 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback {
     private Activity activity;
     private Bitmap profilePicture;
     private Marker marker;
-    boolean firstTime = false;
+    boolean firstTime = true;
     private MapsFragmentController mapsFragmentController;
     private NotificationController notificationController;
     private Location currentLocation;
     private FloatingActionButton moveCurrentPositionButton;
+    private FloatingActionButton setFirstLocationButton;
+    Marker FirstLocationMarker;
     private Context mContext;
-
+    private ProgressBar progressBar;
     @RequiresApi(api = Build.VERSION_CODES.O)
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_maps, container, false);
         mapsFragmentController = new MapsFragmentController();
         notificationController = new NotificationController();
+
         getLocationPermissions();
         if (mLocationPermissionGranted)
             getFirstPosition(getActivity());
 
         StorageReference sref = FirebaseStorage.getInstance().getReference();
         activity = getActivity();
+        progressBar = root.findViewById(R.id.progressBarMaps);
+        progressBar.setVisibility(View.VISIBLE);
         notificationController.createChannel((NotificationManager) Objects.requireNonNull(activity.getSystemService(Context.NOTIFICATION_SERVICE)));
         moveCurrentPositionButton = root.findViewById(R.id.currentPositionButton);
+        setFirstLocationButton = root.findViewById(R.id.set_first_location);
+
+        setFirstLocationButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(currentLocation!=null){
+                    CurrentUserData.setFirstLocation(currentLocation);
+                    FirstLocationMarker.remove();
+                    FirstLocationMarker =mMap.addMarker(new MarkerOptions().position(new LatLng(CurrentUserData.getFirstLocation().getLatitude(), CurrentUserData.getFirstLocation().getLongitude())).title("First Location"));
+                }
+            }
+        });
 
         moveCurrentPositionButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mapsFragmentController.animateCamera(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), mMap, DEFAULT_ZOOM);
+                if(currentLocation!=null)
+                    mapsFragmentController.animateCamera(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), mMap, DEFAULT_ZOOM);
             }
         });
         final long ONE_MEGABYTE = 1024 * 1024;
@@ -113,7 +133,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback {
         mMap = googleMap;
         mMap.setMinZoomPreference(6.0f);
         mMap.setMaxZoomPreference(20.0f);
-
+        mMap.setMyLocationEnabled(false);
         if (CurrentUserData.isDarkMode())
             mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(mContext, R.raw.map_style_dark));
         else
@@ -126,7 +146,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback {
                     Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 return;
             }
-            mMap.setMyLocationEnabled(true);
+            mMap.setMyLocationEnabled(false);
             mMap.getUiSettings().setMyLocationButtonEnabled(false);
         }
 
@@ -144,11 +164,12 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback {
             @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public void onLocationChanged(Location location) {
+                progressBar.setVisibility(View.GONE);
                 currentLocation = location;
-                if (firstTime == false) {
+                if (firstTime == true) {
                     mapsFragmentController.moveCamera(new LatLng(location.getLatitude(), location.getLongitude()), mMap, DEFAULT_ZOOM);
-                    mMap.addMarker(new MarkerOptions().position(new LatLng(CurrentUserData.getFirstLocation().getLatitude(), CurrentUserData.getFirstLocation().getLongitude())).title("First Location"));
-                    firstTime = true;
+                    FirstLocationMarker =mMap.addMarker(new MarkerOptions().position(new LatLng(CurrentUserData.getFirstLocation().getLatitude(), CurrentUserData.getFirstLocation().getLongitude())).title("First Location"));
+                    firstTime = false;
                 }
                 mapsFragmentController.drawMarker(currentLocation, profilePicture, activity, mMap);
                 while (mContext == null) ;
@@ -159,7 +180,6 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback {
                     notificationManager.cancelAll();
                 }
             }
-
 
             @Override
             public void onStatusChanged(String provider, int status, Bundle extras) {
